@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-pesbuk
+  namespace: production
+data:
+  config.php: |
+    <?php
+    $db_host = "127.0.0.1";
+    $db_user = "devopscilsy";
+    $db_pass = "1234567890";
+    $db_name = "dbsosmed";
+    try {    
+      //create PDO connection
+      $db = new PDO("mysql:host=$db_host;dbname=$db_name", $db_user, $db_pass);
+    } catch(PDOException $e) {
+      //show error
+      die("Terjadi masalah: " . $e->getMessage());
+    }
+    ?>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  pesbuk
+  namespace: production
+  labels:
+    app: pesbuk
+spec:
+  selector:
+    matchLabels:
+      app: pesbuk
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pesbuk
+    spec:
+      volumes:
+      - name: config-pesbuk #buat configmap deployment
+        configMap:
+          name: configmap-pesbuk #nama deployment configmap
+
+      containers:
+      - name: pesbuk-php
+        image: sekolahdevopscilsy/php-sosmed
+        ports:
+          - containerPort: 80
+        env:
+          - name: DB_HOST
+            value: "pesbuk"
+          - name: DB_USER
+            value: "devopscilsy"
+          - name: DB_PASS
+            value: "1234567890"
+          - name: MYSQL_ROOT_PASSWORD
+            value: "1234567890"
+        volumeMounts:
+          - name: config-pesbuk
+            mountPath: "/var/www/html/config.php"
+            subPath: "config.php"
+      
+      - name: pesbuk-mysql
+        image: sekolahdevopscilsy/mysql-sosmed
+        ports:
+          - containerPort: 3306
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: "1234567890"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pesbuk-service
+  namespace: production
+spec:
+  selector:
+    app: pesbuk
+  type: LoadBalancer
+  ports:
+  - name: pesbuk-service
+    protocol: TCP
+    port: 80
+    targetPort: 80
