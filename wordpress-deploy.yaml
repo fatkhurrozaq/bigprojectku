@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  wordpress-deploy
+  labels:
+    app:  wordpress-deploy
+spec:
+  selector:
+    matchLabels:
+      app: wordpress-deploy
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app:  wordpress-deploy
+    spec:
+      containers:
+      - name:  wordpress-deploy
+        image:  wordpress:latest 
+        ports:
+        - containerPort:  80
+
+        env:
+          - name: WORDPRESS_DB_HOST
+            value: stagging-db.cp9p94zrg0us.ap-southeast-1.rds.amazonaws.com
+          - name: WORDPRESS_DB_USER
+            value: admin
+          - name: WORDPRESS_DB_PASSWORD
+            value: 
+          - name: WORDPRESS_DB_NAME
+            value: wordpress
+          - name: WORDPRESS_TABLE_PREFIX
+            value: wp_
+          - name: WORDPRESS_AUTH_KEY
+            value: "4Bx.:]H|2VDCWG+r$E_=G9Q?.?+:feBY<AoL|MfC]jNk;$Jr=4JA5A |a)+6LKS)"
+          - name: WORDPRESS_SECURE_AUTH_KEY
+            value: "+%O[AOhH_*< GNn14m{*,*-VhBaa4n@A==q}L7mUSaFl2eX+*zy~)s)j-g@YeR*-"
+          - name: WORDPRESS_LOGGED_IN_KEY
+            value: "@)3Qwz4Yrq];ref+J4eMn:?T-d]%J7s8w^pX8`uIjEIlnk/NpZi{_55.M*7[7f@i"
+          - name: WORDPRESS_NONCE_KEY
+            value: "7[7usvZ6zA08h>bozP-7S}s>^m`!,>t.+uz!WAI1w_mF$o+}Xi)C&.i%-F539l]{"
+          - name: WORDPRESS_AUTH_SALT
+            value: "W>r-cBS1U8zC-Mr/I7-pJc3NJokA+HzH2O4oR&FpsurG 2i.`sJA#tPKLRZpP+9^"
+          - name: WORDPRESS_SECURE_AUTH_SALT
+            value: "j_q`]HIo|9qy[h3`!M#=Ooq(P7s7r*Ax]Uc|?uhKXo?Ps8KTCG-~/%o?_hG,~lq$"
+          - name: WORDPRESS_LOGGED_IN_SALT
+            value: "0rNC(Bky@c|APF=WLvo|^.%fvT0t+wk?_QKC]l6O*_N|g-SR@Gd_{+a@yRD0bT@*"
+          - name: WORDPRESS_NONCE_SALT
+            value: "YN)#)h&E*m`cK.NB5?a+_MB4Ur`u,z-J=T/Y*_[tF|2UoP6%w6epZ}Q.lC:6G1[n"
+
+        volumeMounts:
+          - name: wordpress-pv
+            mountPath: /var/www/html
+      volumes:
+        - name: wordpress-pv
+          persistentVolumeClaim:
+            claimName: wordpress-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-service
+  labels:
+    app: wordpress
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+  selector:
+    app: wordpress-deploy
+  type: LoadBalancer
